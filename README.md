@@ -77,10 +77,7 @@ omnidrive-windows-amd64.exe
 ```
 
 **Android:**
-- Download the APK, then: `adb install omnidrive-android-arm64.apk`
-- Or tap the APK file on your phone
-
-Then open `http://127.0.0.1:8787` in your browser.
+- Download the APK, then: install it.
 
 ### Build from Source
 

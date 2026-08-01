@@ -1,7 +1,7 @@
 # Compiled binaries
 /build/
-omnidrive
-omnidrive.exe
+/omnidrive
+/omnidrive.exe
 
 # Local state — contains encrypted account credentials
 .omnidrive/
