@@ -10,6 +10,14 @@ No Node. No Docker. No database. No server to rent.
 
 ---
 
+## The Concept
+
+![Multi-cloud aggregator](docs/screenshots/multi-cloud-concept.png)
+
+OmniDrive brings all your cloud storage into one unified interface. Connect Google Drive, OneDrive, Dropbox, and more — then browse, upload, and share files across all of them without switching apps.
+
+---
+
 ## Screenshots
 
 <table>
@@ -49,9 +57,34 @@ Pre-built binaries are auto-generated on every release:
 
 ---
 
-## Build from Source
+## Getting Started
 
-`ash
+### Quick Install (Pre-built Binaries)
+
+1. Go to [Releases](https://github.com/atanuroy22/omnidrive/releases)
+2. Download the binary for your platform
+3. Run it:
+
+**Linux/macOS:**
+```bash
+chmod +x omnidrive-linux-amd64
+./omnidrive-linux-amd64
+```
+
+**Windows:**
+```bash
+omnidrive-windows-amd64.exe
+```
+
+**Android:**
+- Download the APK, then: `adb install omnidrive-android-arm64.apk`
+- Or tap the APK file on your phone
+
+Then open `http://127.0.0.1:8787` in your browser.
+
+### Build from Source
+
+```bash
 # All platforms
 ./build.sh
 
@@ -60,7 +93,7 @@ Pre-built binaries are auto-generated on every release:
 
 # Just Windows
 ./build.sh windows-amd64
-`
+```
 
 **Requirements:** Go 1.24+, JDK 17+, Android SDK (for APK).
 
