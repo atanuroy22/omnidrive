@@ -53,7 +53,7 @@ Pre-built binaries are auto-generated on every release:
 | Linux | omnidrive-linux-amd64 |
 | macOS | omnidrive-darwin-arm64 |
 
-👉 **[Go to Releases](https://github.com/atanuroy22/omnidrive/releases)**
+👉 **[Download Latest Release](https://github.com/atanuroy22/omnidrive/releases/latest)**
 
 ---
 
@@ -61,7 +61,7 @@ Pre-built binaries are auto-generated on every release:
 
 ### Quick Install (Pre-built Binaries)
 
-1. Go to [Releases](https://github.com/atanuroy22/omnidrive/releases)
+1. Go to [Latest Release](https://github.com/atanuroy22/omnidrive/releases/latest)
 2. Download the binary for your platform
 3. Run it:
 
