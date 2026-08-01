@@ -1,502 +1,256 @@
 # OmniDrive
 
-All your cloud drives — Google Drive, OneDrive, Dropbox, pCloud, TeraBox, WebDAV,
-S3 — in one mobile web app, served by a **single 6.7 MB binary** that runs on
-your phone.
+[![Go Version](https://img.shields.io/badge/go-1.24+-00ADD8?style=for-the-badge&logo=go)](https://go.dev)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](LICENSE)
+[![GitHub stars](https://img.shields.io/github/stars/atanuroy22/omnidrive?style=for-the-badge&logo=github)](https://github.com/atanuroy22/omnidrive/stargazers)
 
-No Node, no Docker, no database, no server to rent. Start it in Termux, open
-`127.0.0.1:8787` in your browser, and it behaves like a normal app.
+> All your cloud drives — Google Drive, OneDrive, Dropbox, pCloud, TeraBox, WebDAV, S3 — in one mobile web app, served by a **single 6.7 MB binary** that runs on your phone.
 
-```
-$ omnidrive
+No Node. No Docker. No database. No server to rent. Start it in Termux, open `127.0.0.1:8787` in your browser, and it behaves like a normal app.
 
-  OmniDrive 0.1.0
-  ─────────────────────────────────────────
-  Open      http://127.0.0.1:8787
-  Drives    4 connected
-  Data      /data/data/com.termux/files/home/.omnidrive
-  DNS       Android fix active (192.168.1.1:53, 1.1.1.1:53)
+---
 
-  Press Ctrl+C to stop.
-```
+## Overview
+
+![Multi-cloud concept](docs/screenshots/multi-cloud-concept.png)
+
+OmniDrive unifies every cloud storage provider into a single, consistent file manager. Connect Google Drive, OneDrive, Dropbox, and more — then browse, upload, download, and share files across all of them from one interface.
+
+Works on **Android** (as a native APK), **Windows**, **Linux**, and **macOS** — the same binary, the same UI, the same encrypted account store.
 
 ---
 
 ## Screenshots
 
-### Android — all connected drives
-![All drives](docs/screenshots/all_drives.jpeg)
+### Android
 
-### Android — combined file view across providers
-![Combined view](docs/screenshots/combined.jpeg)
+![All connected drives](docs/screenshots/all_drives.jpeg)
+*Connect multiple accounts and see them all in one place.*
 
-### Android — settings screen
+![Combined file view](docs/screenshots/combined.jpeg)
+*Browse files from every provider in a unified folder tree.*
+
 ![Settings](docs/screenshots/setting.jpeg)
-
-The same UI works on **Windows**, **Linux**, and **macOS** — it's a browser app served from a single binary. No separate desktop client needed.
-
----
-
-## Why this is a rewrite, not a port
-
-This project takes its concept and vocabulary from
-[dimartarmizi/OmniCloud](https://github.com/dimartarmizi/OmniCloud) — a Vue +
-Express + SQLite drive aggregator — and rebuilds it for a phone.
-
-Running the original on Android would mean shipping Node (~150 MB in Termux)
-plus a native SQLite module that routinely fails to compile on arm64. That is
-the opposite of lightweight. So the backend became one static Go binary with the
-UI embedded inside it:
-
-| | OmniCloud (upstream) | OmniDrive (this) |
-|---|---|---|
-| Runtime | Node + npm tree | none — one static ELF |
-| Install size | ~150–300 MB | **6.7 MB** |
-| Database | SQLite (native module) | encrypted file, no CGO |
-| Frontend | Vue 3 + Vite build | embedded, no build step |
-| Dependencies | dozens | **zero** outside the Go standard library |
-| Setup on a 2nd device | re-authorise every account | one command |
-
-`go.mod` has no `require` block. That is deliberate: every dependency is a thing
-that can break a cross-compile for a phone.
+*Manage drives, configure upload strategies, and export your setup.*
 
 ---
 
-## Install on Android — the APK
+## Features
 
-Build it once, then install it like any other app. No Termux, no terminal, no
-file copying afterwards.
+- **7 cloud providers** — Google Drive, OneDrive, Dropbox, pCloud, TeraBox, WebDAV, S3-compatible
+- **Zero dependencies** — pure Go standard library, no third-party packages
+- **Encrypted state** — AES-256-GCM for local data, PBKDF2-secured portable bundles
+- **One-command device transfer** — pair two phones over Wi-Fi in seconds
+- **Upload strategies** — most-free, least-used, round-robin, weighted, or manual
+- **Public file links** — one tap to share any file across providers
+- **Recycle bin** — cloud deletes are permanent (saves your quota); phone deletes go to a local trash
+- **Foreground service** — transfers keep running with the screen off on Android
+
+---
+
+## Quick Start
+
+### Android APK
+
+Build once, install like any app. No Termux needed after that.
 
 ```bash
-ABI=arm64-v8a bash android/build-apk.sh      # 2.7 MB, every 64-bit phone
-bash android/build-apk.sh                    # 8.5 MB, all three ABIs
+ABI=arm64-v8a bash android/build-apk.sh      # 2.7 MB, 64-bit phones
+bash android/build-apk.sh                    # 8.5 MB, all ABIs
 ```
-
-Copy `build/omnidrive-0.1.0.apk` to your phone and tap it (allow "install from
-unknown sources" when asked), or:
 
 ```bash
 adb install -r build/omnidrive-0.1.0.apk
 ```
 
-Open **OmniDrive** from your app drawer. It shows your files immediately; the
-**Drives** tab is where you connect accounts, and **Move** is where you copy the
-whole setup to another phone.
+Open **OmniDrive** from your app drawer. The **Drives** tab connects accounts; **Move** transfers everything to another phone.
 
-Requirements to build: **Go 1.24+**, a **JDK 17+**, and an **Android SDK** with
-any recent build-tools and the `android-36` platform. No Gradle, no Android
-Studio, no NDK — `android/build-apk.sh` drives `aapt2`, `javac`, `d8`,
-`zipalign` and `apksigner` directly. On Windows run it from Git Bash.
-
-The first build generates `android/omnidrive-release.keystore`. **Keep that
-file** — Android refuses to upgrade an app signed with a different key.
-
-### What the app is doing
-
-The APK is a WebView plus a foreground service; the service runs the same Go
-server as a child process. Four Android-specific details make that work on
-current devices:
-
-- **The binary ships as `lib/<abi>/libomnidrive.so`.** Android only extracts and
-  grants execute permission to files matching `lib*.so`, and since Android 10
-  the native library directory is the *only* place an app may execute from.
-  Copying the binary to `getFilesDir()` and running it there fails with
-  "Permission denied" on every modern device.
-- **Sign-in opens in your real browser, not the WebView.** Google and Microsoft
-  both reject OAuth from embedded WebViews (`disallowed_useragent`). The app
-  hands non-loopback URLs to the browser, which then reaches the callback on
-  this device's own loopback address. Returning to the app refreshes the
-  drive list automatically.
-- **DNS.** Android has no `/etc/resolv.conf`, so Go's pure-Go resolver falls
-  back to `127.0.0.1:53` and every lookup fails — the usual reason a Go binary
-  looks offline on a phone. OmniDrive detects this and builds a resolver from
-  `getprop net.dns*`, with public fallbacks.
-  ([internal/androidnet](internal/androidnet/androidnet.go))
-- **Staying alive.** A `dataSync` foreground service plus a partial wake lock
-  keeps transfers running with the screen off. The notification has a Stop
-  button.
-
-`minSdk 29` (Android 10) so downloads can use MediaStore and need no storage
-permission at all; `targetSdk 36` (Android 16), including the predictive-back
-callback that Android 16 requires. The Go binary uses 64 KB segment alignment,
-so it is safe on the 16 KB-page devices Android 15+ ships.
-
-### Alternative: Termux
-
-If you would rather run it from a terminal — or want it on a device where you
-cannot sideload — the same binary works standalone. Needs
-[Termux **from F-Droid**](https://f-droid.org/packages/com.termux/); the Play
-Store build is abandoned and too old.
+### Termux (Android terminal)
 
 ```bash
-./build.sh android                                    # on your computer
-# copy build/omnidrive-android-arm64 to the phone, then in Termux:
+./build.sh android
 termux-setup-storage
-bash install-termux.sh ~/storage/downloads/omnidrive-android-arm64
+bash scripts/install-termux.sh ~/storage/downloads/omnidrive-android-arm64
 omnidrive-start
 ```
 
-Then open http://127.0.0.1:8787. Or build on the phone itself:
-`pkg install golang git && go build -ldflags "-s -w" ./cmd/omnidrive`
+Then open http://127.0.0.1:8787 in your browser.
+
+### Desktop (Windows / Linux / macOS)
+
+```bash
+./build.sh                                   # builds all targets
+./build/omnidrive-linux-amd64                # or windows-amd64, darwin-arm64, etc.
+```
+
+Open http://127.0.0.1:8787 — the same UI, no installation required.
 
 ---
 
-## Moving your setup to another device
+## Supported Providers
 
-This is the part that usually hurts: eight accounts connected, new phone, and
-now eight sign-in flows on a 6-inch screen.
+| Provider | Auth method | Setup needed |
+|---|---|---|
+| Google Drive | OAuth 2.0 | [Google Cloud Console](https://console.cloud.google.com/apis/credentials) |
+| OneDrive | OAuth 2.0 | [Microsoft Entra](https://entra.microsoft.com) |
+| Dropbox | OAuth 2.0 | [Dropbox Console](https://www.dropbox.com/developers/apps) |
+| pCloud | Email + password | None — sign in directly |
+| TeraBox | Session cookie | None — **1 TB free** |
+| WebDAV | URL + credentials | None — Nextcloud, Yandex, Koofr, NAS, etc. |
+| S3 compatible | Access keys | None — AWS, R2, B2, MinIO, Wasabi, Storj |
 
-Everything — accounts, OAuth refresh tokens, your registered app credentials,
-starred files, settings — packs into one encrypted bundle. Pick whichever route
-suits you; all three produce the same result.
+**No developer account required** for pCloud, TeraBox, WebDAV, and S3. Open the app and connect instantly.
 
-### 1. Pair over Wi-Fi (fastest)
+---
 
-On the device that already works:
+## Moving Your Setup to Another Device
+
+Eight accounts connected, new phone — no need to sign in eight times. Everything packs into one encrypted bundle.
+
+### Pair over Wi-Fi (fastest)
 
 ```bash
 omnidrive pair
 ```
 
 ```
-  Pairing 4 drive(s). Paste this one link on the other device —
-  into the Move tab, or on a command line:
+  Pairing 4 drive(s). Paste this one link on the other device:
 
       omnidrive join "http://192.168.1.42:41235/pair/a3f9c1?c=K3M9P2QX"
 
   Single use · expires 11:47PM
 ```
 
-One link, nothing to keep together. Paste it on the new device and it is done —
-both devices' web UIs have the same thing under the **Move** tab.
-
-### 2. Keep a copy inside a drive you already use
-
-Store the encrypted bundle in one of your own clouds, as
-`OmniDrive/omnidrive-config.omnibundle`:
+### Store inside a connected drive
 
 ```bash
-omnidrive accounts                             # find the account id
 omnidrive push a1b2c3d4 -passphrase "your passphrase"
-```
-
-On a new phone, connect **any one** account, then:
-
-```bash
+# On new phone, connect any one account, then:
 omnidrive pull a1b2c3d4 -passphrase "your passphrase"
 ```
 
-Everything else arrives. This is the best answer to "I reinstall often" — there
-is nothing to carry around and nothing to lose.
-
-### 3. Export a file
+### Export to a file
 
 ```bash
 omnidrive export backup.omnibundle -passphrase "your passphrase"
-omnidrive import backup.omnibundle -passphrase "your passphrase"     # elsewhere
+omnidrive import backup.omnibundle -passphrase "your passphrase"
 ```
 
-### How merging works
-
-Accounts merge by ID, so importing the same bundle twice changes nothing and a
-device that connected something new locally does not lose it. Pass `-replace`
-to wipe local accounts first instead.
+Accounts merge by ID — importing the same bundle twice is safe. Use `-replace` to wipe local accounts first.
 
 ---
 
-## Connecting drives
+## Upload Strategies
 
-| Provider | Auth | What you need |
-|---|---|---|
-| Google Drive | OAuth | client ID + secret from [Google Cloud Console](https://console.cloud.google.com/apis/credentials) |
-| OneDrive | OAuth | app registration in [Microsoft Entra](https://entra.microsoft.com) |
-| Dropbox | OAuth | scoped app from the [Dropbox console](https://www.dropbox.com/developers/apps) |
-| pCloud | email + password | swapped for a token on first use; the password is then discarded |
-| TeraBox | sign-in page | **1 TB free.** Sign in on TeraBox's own page inside the app; on desktop, paste the `ndus` cookie |
-| WebDAV | URL + user + password | Nextcloud, ownCloud, Yandex Disk, Koofr, Box, most NAS boxes |
-| S3 compatible | access keys | AWS, Cloudflare R2, Backblaze B2, MinIO, Wasabi, Storj, Hetzner |
-
-### Start with no setup at all
-
-**TeraBox, pCloud, WebDAV and S3 need no developer console.** Open the app, tap
-Connect a drive, sign in, done. TeraBox alone is 1 TB free; WebDAV covers Yandex
-Disk (10 GB free), Nextcloud, ownCloud, Koofr, Box and most NAS boxes.
-
-### TeraBox: why it has no client ID either
-
-TeraBox offers no OAuth to third-party apps at all — its own clients sign in
-with an ordinary session cookie, and so does this one. Tap **Connect a drive →
-TeraBox → Sign in** and TeraBox's real sign-in page opens inside the app; the
-only thing kept is the session it produces. On a desktop browser there is no
-in-app page to open, so sign in at 1024terabox.com and paste the value of the `ndus`
-cookie instead.
-
-There is no refresh token in that design, so a connection lasts as long as the
-cookie does — months in practice. When one lapses the app says so, and **Drives
-→ the drive → Sign in to TeraBox again** is the whole repair. Everything else
-works exactly as the other drives do: browse, upload, download, stream, copy,
-move, rename, delete, share, and the recycle bin.
-
-### OAuth: why it asks for a client ID
-
-Google, Microsoft and Dropbox will not issue tokens to an unregistered app.
-There is no API that trades an email and password for Drive access — that was
-removed deliberately so third-party apps never handle your password. Every app
-that appears to "just log you in" is shipping its own client ID inside the
-binary; the registration still happened, just not by you.
-
-So it has to happen once. You have two ways to make it *only* once:
-
-**Bake it into the build** — then no device ever asks:
-
-```bash
-cp oauth.env.example oauth.env      # fill in your client IDs
-ABI=arm64-v8a bash android/build-apk.sh
-```
-
-The build prints `preconfigured: Google Dropbox` to confirm. `oauth.env` is
-gitignored, and every provider in it is optional.
-
-**Or enter it once in the app** — it is stored encrypted and travels to every
-device you later pair with, so the second phone never asks either.
-
-Either way, register this **exact** redirect URI with the provider:
-
-```
-http://127.0.0.1:8787/oauth/callback
-```
-
-A client ID is not a password: it identifies the application, not you, and
-anyone with the APK can read it. What actually protects the exchange is PKCE,
-which this app always uses. A client secret is optional for providers that
-support public clients.
-
-`oauth.env.example` has click-by-click instructions for each console.
-
-Scopes are requested for you, including the ones providers require for a
-long-lived refresh token (`access_type=offline` on Google,
-`token_access_type=offline` on Dropbox, `offline_access` on Microsoft). If a
-provider returns no refresh token the connection is rejected outright rather
-than dying silently a few hours later.
-
----
-
-## Where uploads go
-
-Upload from inside a folder and the file goes there. Upload from the top level
-and a strategy picks the drive — the same five upstream OmniCloud offers:
+Upload from a folder and the file goes there. Upload from the root and a strategy picks the drive:
 
 | Strategy | Behaviour |
 |---|---|
-| `most_free` *(default)* | drive with the most free space |
-| `least_used` | drive with the least data stored |
-| `round_robin` | rotate evenly, position survives restarts |
-| `weighted_round_robin` | rotate proportionally to each drive's weight |
-| `manual` | your explicit priority order |
-
-Drives with unknown capacity (S3 buckets, unlimited plans) sort as spacious
-rather than full. If nothing looks like it fits, a drive is still chosen and the
-provider's own error is surfaced — cached quota is often stale.
-
----
-
-## Deleting
-
-Delete means opposite things on the two halves of the app, on purpose.
-
-| Where | What happens |
-|---|---|
-| Google Drive, OneDrive, pCloud, TeraBox | **Gone for good.** The space comes back at once. |
-| Dropbox | Recoverable for 30 days — no API exists to purge it. |
-| S3, WebDAV | Gone, as those protocols have always behaved. |
-| Phone, SD card | **Into OmniDrive's recycle bin.** Restorable. |
-
-Cloud recycle bins are a trap: a "deleted" file keeps eating the quota you pay
-for, and the only way to reclaim it is to open the provider's own website — the
-thing this app exists to avoid. So cloud deletes skip the bin entirely.
-
-Phone storage is the reverse. Android has no recycle bin of its own, so a
-mis-tap would destroy the file outright. Deletes there move into a hidden
-`.omnidrive-trash` folder **on the same volume** (a rename, not a copy, so
-deleting a 4 GB video is instant), with a sidecar recording where it came from.
-
-Open **Drive Settings → the drive → Recycle bin** to restore an item to its
-original folder, delete one forever, or empty the lot. Binned files still occupy
-the device until you do — that is the trade for being able to undo.
-
-Dropbox and OneDrive publish no API to purge a *personal* account's bin. That is
-their limitation, not an omission here; those have to be emptied on
-dropbox.com and onedrive.live.com.
-
-**TeraBox's bin opens in the app.** Its API is one of the few that can both list
-and restore, so **Drives → the drive → Recycle bin** shows whatever was deleted
-before this app or on the TeraBox website, and puts it back. Worth a visit on a fresh
-connection: a bin nobody has emptied is often the reason a 1 TB drive reports
-itself full.
-
----
-
-## Sharing a file with someone else
-
-**File → ⋯ → Copy link** produces a public URL. Send it to anyone, on any
-network — they download without signing in or installing anything.
-
-The link is minted by the provider, not by OmniDrive, and that is the only
-design that works. This app listens on the phone's loopback address behind
-carrier NAT, so a link it served itself would be unreachable from anywhere else
-and would die the moment the screen went off. A Google or Dropbox link is served
-by their CDN and keeps working with the phone switched off.
-
-| Drive | Link | Length |
-|---|---|---|
-| OneDrive | permanent, revocable | ~45 chars |
-| Google Drive | permanent, revocable | ~65 |
-| TeraBox | permanent, revocable | ~40 |
-| pCloud | permanent, revocable | ~75 |
-| Dropbox | permanent, revocable | ~110 |
-| S3, WebDAV, phone storage | not offered — no public-link API | — |
-
-Length is the provider's choice, not ours. **TeraBox and OneDrive give the
-shortest links.**
-
-pCloud advertises a short `u.pc.cd/XXX` form and OmniDrive deliberately does not
-use it: that host has no TLS listener at all, so the link is cleartext `http://`,
-and its entire body is a JavaScript redirect to the long URL. Phones warn about
-it, Android blocks cleartext by default, and any client that does not run the
-script gets a blank page instead of the file.
-
-Two consequences worth knowing:
-
-- **Anyone holding the link can download the file.** There is no password and no
-  expiry. That is what makes it work from any network; it is also the risk.
-- **Stop sharing** revokes it, on every provider above.
-
-A file on phone storage has no link. Copy it to a cloud drive first — the
-option only appears where it will actually work.
-
-### Folders
-
-Folders can be shared too, on all four providers. The recipient gets a page
-listing the contents and picks what to download — useful for handing over a
-holiday album without zipping it first.
-
-### Several files at once
-
-Select them, tap **Share → Copy links**, and you get one link per line, ready to
-paste into a chat. Nothing leaves the phone: the other person fetches each file
-from the cloud.
-
-The same button also offers **Send the files**, which is the opposite trade —
-that pushes every byte off this phone through Bluetooth, WhatsApp or whatever
-you pick. Use it when the other person is standing next to you and the files are
-small; use links for anything else.
-
-### Keeping track of what is public
-
-**Drive Settings → Shared links** lists every link this device has handed out,
-with the drive and date, and revokes them one at a time or all at once.
-
-OmniDrive keeps this register itself. None of the four providers offers a cheap
-"list everything that is public" call that works across all of them, and a link
-you cannot find is a file you have quietly published and forgotten. The
-consequence is that links created on the provider's own website do not appear
-here — only the ones made in this app.
+| `most_free` *(default)* | Drive with the most available space |
+| `least_used` | Drive with the least data stored |
+| `round_robin` | Rotate evenly across drives |
+| `weighted_round_robin` | Rotate proportionally to each drive's weight |
+| `manual` | Your explicit priority order |
 
 ---
 
 ## Security
 
-- The state file is **AES-256-GCM** encrypted with a random per-device key.
-- Portable bundles are **PBKDF2-SHA256 (210 000 iterations) + AES-256-GCM**
-  under your passphrase. Sealed before leaving the device, so cloud sync hands
-  your provider ciphertext it cannot read.
-- Encryption is bound to its context, so a bundle cannot be opened as device
-  state or vice versa, even with the right passphrase.
-- Every write is atomic (temp file + rename) — an OOM kill mid-write cannot
-  truncate your accounts away.
-- The server binds to **127.0.0.1** only. Bind wider with `-addr 0.0.0.0` and it
-  generates a required access token and prints it in the URL.
-- Pairing runs on its own short-lived listener, exposing exactly one endpoint:
-  single use, five wrong codes destroys it, ten-minute expiry, and the code is
-  also the decryption key.
-- Optional: `-device-passphrase` protects local state with a password too.
-  (Applies when the data directory is first created.)
-
-Everything uses the Go standard library — `crypto/pbkdf2`, `crypto/aes`,
-`crypto/cipher`. No third-party crypto.
+- **AES-256-GCM** encryption for local state with a random per-device key
+- **PBKDF2-SHA256** (210,000 iterations) + AES-256-GCM for portable bundles
+- Encryption is context-bound — a bundle cannot be opened as device state or vice versa
+- Every write is atomic (temp file + rename) — an OOM kill cannot corrupt your accounts
+- Server binds to **127.0.0.1** by default; bind wider with `-addr 0.0.0.0` and it generates a required access token
+- Pairing uses a single-use, five-attempt lockout, ten-minute expiry code that is also the decryption key
+- All crypto from the Go standard library — no third-party dependencies
 
 ---
 
-## Command reference
+## Command Reference
 
 ```
-omnidrive [flags]                 start the server (default)
-omnidrive accounts                list connected drives
-omnidrive pair                    share this setup with another device
-omnidrive join <pairing-link>     receive a setup from another device
-omnidrive export <file>           write an encrypted backup bundle
-omnidrive import <file>           read an encrypted backup bundle
-omnidrive push <account-id>       save the setup into a connected drive
-omnidrive pull <account-id>       restore the setup from a connected drive
+omnidrive [flags]                 Start the server (default)
+omnidrive accounts                List connected drives
+omnidrive pair                    Share this setup with another device
+omnidrive join <pairing-link>     Receive a setup from another device
+omnidrive export <file>           Write an encrypted backup bundle
+omnidrive import <file>           Read an encrypted backup bundle
+omnidrive push <account-id>       Save the setup into a connected drive
+omnidrive pull <account-id>       Restore the setup from a connected drive
 omnidrive version
-
-  -data string               data directory (default ~/.omnidrive)
-  -addr string               bind address (default 127.0.0.1)
-  -port int                  port (default 8787)
-  -passphrase string         bundle passphrase        ($OMNIDRIVE_PASSPHRASE)
-  -device-passphrase string  local state passphrase   ($OMNIDRIVE_DEVICE_PASSPHRASE)
-  -replace                   on import, discard local accounts instead of merging
 ```
 
-Flags and the subcommand may appear in any order.
+**Flags:**
+
+| Flag | Default | Description |
+|---|---|---|
+| `-data` | `~/.omnidrive` | Data directory |
+| `-addr` | `127.0.0.1` | Bind address |
+| `-port` | `8787` | Port |
+| `-passphrase` | `$OMNIDRIVE_PASSPHRASE` | Bundle passphrase |
+| `-device-passphrase` | — | Local state passphrase |
+| `-replace` | — | Discard local accounts on import |
 
 ---
 
 ## Troubleshooting
 
-**"server misbehaving" / nothing loads, but the phone has internet.**
-The Android DNS fix did not engage. Check `curl 127.0.0.1:8787/api/health` —
-`dnsPatched` should be `true`. Also shown under **More → About**.
+**Nothing loads, but the phone has internet.**
+The Android DNS fix did not engage. Check `curl 127.0.0.1:8787/api/health` — `dnsPatched` should be `true`.
 
-**The APK will not install: "App not installed".**
-Usually an older copy signed with a different key. Uninstall the old one first.
-On Android 13+ you may also need to allow your file manager to install unknown
-apps (Settings → Apps → Special access → Install unknown apps).
+**APK won't install: "App not installed".**
+An older copy signed with a different key is still on the device. Uninstall it first. On Android 13+ you may also need to allow your file manager to install unknown apps.
 
-**The app opens on the startup screen and stays there.**
-Tap **Log**. The server's own output is there and names the cause — most often
-port 8787 already being in use by another app.
+**The app opens but stays on the startup screen.**
+Tap **Log**. The server's own output is there — most often port 8787 is already in use.
 
 **Sign-in bounces me to the browser.**
-That is deliberate and required: Google and Microsoft reject OAuth inside
-embedded WebViews. Finish signing in there, then switch back to OmniDrive; it
-refreshes on its own.
+That is deliberate. Google and Microsoft reject OAuth inside embedded WebViews. Finish signing in in your browser, then switch back to OmniDrive — it refreshes automatically.
 
 **The server dies when I switch apps.**
-Android 12+ kills background processes. Install `termux-api` (plus the
-Termux:API app), use `omnidrive-start`, pull down the Termux notification and
-tap **Acquire wakelock**, and exclude Termux from battery optimisation. On
-heavy-handed OEM builds (Xiaomi, Samsung, Oppo) also lock Termux in the recents
-screen.
-
-**`Permission denied` when starting.**
-The binary is on `/sdcard`, which is `noexec`. Reinstall with
-`install-termux.sh`, which copies into `$PREFIX/bin`.
+Android 12+ kills background processes. Install `termux-api`, use `omnidrive-start`, pull down the Termux notification and tap **Acquire wakelock**, and exclude Termux from battery optimisation. On heavy-handed OEM builds (Xiaomi, Samsung, Oppo) also lock Termux in the recents screen.
 
 **Google: `Error 400: redirect_uri_mismatch`.**
-Your OAuth client has no matching redirect URI registered. Easiest fix: create
-the client as **Desktop app** instead of Web application — Google then accepts
-loopback redirects on any port with nothing to register.
-
-To keep an existing Web application client, add this under *Authorised redirect
-URIs*, byte for byte, no trailing slash:
+Create the OAuth client as **Desktop app** instead of Web application — Google accepts loopback redirects on any port with nothing to register. If you must use a Web application client, add this under *Authorised redirect URIs*, byte for byte, no trailing slash:
 
 ```
 http://127.0.0.1:8787/oauth/callback
 ```
 
-The connect screen shows the exact string to copy. If you run on a non-default
-port, register that port instead.
+---
+
+## Building from Source
+
+**Requirements:** Go 1.24+, JDK 17+ (for APK builds), Android SDK with build-tools and `android-36` platform.
+
+```bash
+# Build all targets
+./build.sh
+
+# Build just Android
+./build.sh android
+
+# Build a single target
+./build.sh android-arm64
+
+# Build the APK
+ABI=arm64-v8a bash android/build-apk.sh
+```
+
+The APK is a WebView plus a foreground service. The Go binary runs as a child process inside the service. Four Android-specific details make this work on modern devices:
+
+- The binary ships as `lib/<abi>/libomnidrive.so` — Android only executes from the native library directory since Android 10
+- Sign-in opens in your real browser, not the WebView (Google/Microsoft reject embedded OAuth)
+- DNS resolution is patched from `getprop net.dns*` with public fallbacks — Android has no `/etc/resolv.conf`
+- A `dataSync` foreground service with a partial wake lock keeps transfers running with the screen off
+
+`minSdk 29` (Android 10), `targetSdk 36` (Android 16). The Go binary uses 64 KB segment alignment for 16 KB-page devices on Android 15+.
+
+---
+
+## License
+
+[MIT](LICENSE) — free to use, modify, and distribute.
 
 **Uploads fail on large files.**
 Google Drive and OneDrive use resumable/chunked sessions and stream without
