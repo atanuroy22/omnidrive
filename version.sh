@@ -12,10 +12,10 @@
 #   VERSION=2.0.0 VERSION_CODE=2 bash android/build-apk.sh
 
 # Release version (used for all platforms: Linux, Windows, macOS, APK)
-VERSION="${VERSION:-1.0.0}"
+VERSION="${VERSION:-0.15.3}"
 
 # APK version code (must be an integer, incremented with each update)
-VERSION_CODE="${VERSION_CODE:-1}"
+VERSION_CODE="${VERSION_CODE:-42}"
 
 # Export for use in subshells
 export VERSION VERSION_CODE
