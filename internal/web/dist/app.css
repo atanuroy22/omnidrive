@@ -1,0 +1,673 @@
+/* OmniDrive UI — mobile first, no framework, no web fonts.
+   Everything here is sized for a thumb: 48px hit targets, bottom-anchored
+   navigation, and safe-area padding for phones with gesture bars. */
+
+:root {
+  color-scheme: dark;
+  --bg: #0d1117;
+  --surface: #161b22;
+  --surface-2: #1c2333;
+  --border: #2a313c;
+  --text: #e6edf3;
+  --muted: #9198a1;
+  --accent: #2f81f7;
+  --accent-dim: #1f6feb33;
+  --good: #3fb950;
+  --bad: #f85149;
+  --warn: #d29922;
+  --radius: 12px;
+  --tabbar-h: 60px;
+  --safe-b: env(safe-area-inset-bottom, 0px);
+  /* Keeps dialogs clear of a notch or punch-hole camera. */
+  --safe-t: env(safe-area-inset-top, 0px);
+}
+
+* { box-sizing: border-box; }
+
+/* The `hidden` attribute must always win.
+   Browsers implement it as `display: none` in the user-agent stylesheet, which
+   any author-level `display` declaration outranks — so a rule as ordinary as
+   `.viewer { display: flex }` silently leaves a hidden element on screen. That
+   is not a hypothetical: it left the viewer overlay covering the whole app. */
+[hidden] { display: none !important; }
+
+html, body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font: 15px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  overscroll-behavior-y: contain;
+}
+
+body {
+  padding-bottom: calc(var(--tabbar-h) + var(--safe-b));
+  min-height: 100dvh;
+}
+
+/* ---------- top bar ---------- */
+
+/* Solid backgrounds, not translucent ones.
+   backdrop-filter forces the compositor to re-blur everything behind these
+   bars on every scroll frame, which on Android's WebView is the difference
+   between smooth and visibly stuttering. The look barely changes. */
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+  padding-top: env(safe-area-inset-top, 0px);
+}
+
+.topbar-main {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+}
+
+.topbar h1 { font-size: 1.1rem; margin: 0; flex: 1; font-weight: 650; }
+.topbar-actions { display: flex; gap: 4px; }
+
+.icon-btn {
+  width: 40px; height: 40px;
+  display: grid; place-items: center;
+  background: none; border: 0; color: var(--muted);
+  font-size: 20px; border-radius: 10px; cursor: pointer;
+}
+.icon-btn:active { background: var(--surface-2); color: var(--text); }
+.icon-btn.spinning { animation: spin .8s linear infinite; }
+/* An active toggle, e.g. selection mode. Distinct from .spinning, which means
+   "work in progress" and belongs only on refresh. */
+.icon-btn.on { background: var(--accent-dim); color: var(--accent); }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.crumbs {
+  display: flex; gap: 2px;
+  padding: 0 10px 10px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  white-space: nowrap;
+}
+.crumbs::-webkit-scrollbar { display: none; }
+.crumb {
+  background: none; border: 0; color: var(--muted);
+  font-size: .85rem; padding: 4px 6px; cursor: pointer; flex: none;
+}
+.crumb:last-child { color: var(--text); font-weight: 600; }
+.crumb + .crumb::before { content: "›"; margin-right: 6px; color: var(--border); }
+
+/* ---------- lists ---------- */
+
+.view { padding: 10px 12px 24px; }
+.list { display: flex; flex-direction: column; }
+
+.row-item {
+  display: flex; align-items: center; gap: 12px;
+  padding: 11px 8px;
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+  min-height: 56px;
+  /* Skip layout and paint for rows scrolled out of view. A folder with a few
+     hundred files is otherwise laid out in full on every frame. */
+  content-visibility: auto;
+  contain-intrinsic-size: auto 56px;
+}
+.row-item:active { background: var(--surface); }
+
+/* Checkboxes exist in the markup always and are revealed by a class on the
+   list. Rebuilding the rows to show them moved the list under the user's
+   finger, so a long press selected a second, unintended file. */
+.row-item .checkbox { display: none; }
+.list.selecting .row-item .checkbox {
+  display: grid; place-items: center;
+  flex: none;
+  width: 21px; height: 21px;
+  border: 2px solid var(--border);
+  border-radius: 6px;
+  color: transparent;
+  font-size: 13px;
+}
+.list.selecting .row-item.selected .checkbox {
+  background: var(--accent); border-color: var(--accent); color: #fff;
+}
+.list.selecting .row-item.selected { background: var(--accent-dim); }
+
+.row-icon { font-size: 22px; width: 26px; text-align: center; flex: none; }
+.row-body { flex: 1; min-width: 0; }
+.row-name {
+  font-size: .93rem;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.row-sub { font-size: .75rem; color: var(--muted); margin-top: 2px; }
+.row-more {
+  flex: none; width: 38px; height: 38px;
+  background: none; border: 0; color: var(--muted);
+  font-size: 18px; border-radius: 9px; cursor: pointer;
+}
+.row-more:active { background: var(--surface-2); }
+.star-on { color: var(--warn); }
+
+.empty { text-align: center; color: var(--muted); padding: 48px 16px; font-size: .9rem; }
+
+/* ---------- file view modes ---------- */
+
+/* Compact: same rows, less air. */
+.list.view-compact .row-item { min-height: 42px; padding: 5px 8px; gap: 9px; }
+.list.view-compact .row-icon { font-size: 17px; width: 21px; }
+.list.view-compact .row-name { font-size: .85rem; }
+.list.view-compact .row-sub { display: none; }
+.list.view-compact .row-more { width: 32px; height: 32px; }
+
+/* Large icons: a tile grid, sized so four fit across a phone. */
+.list.view-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+  gap: 6px;
+  padding-top: 6px;
+}
+.list.view-grid .row-item {
+  flex-direction: column;
+  text-align: center;
+  gap: 6px;
+  padding: 12px 6px;
+  min-height: 104px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  contain-intrinsic-size: auto 104px;
+}
+.list.view-grid .row-icon { font-size: 34px; width: auto; }
+.list.view-grid .row-body { width: 100%; min-width: 0; }
+.list.view-grid .row-name {
+  font-size: .74rem; line-height: 1.25;
+  /* Two lines then ellipsis: filenames are long and tiles are narrow. */
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+  white-space: normal; overflow: hidden;
+}
+.list.view-grid .row-sub { font-size: .65rem; }
+.list.view-grid .row-more { position: absolute; top: 2px; right: 2px; width: 26px; height: 26px; font-size: 14px; }
+.list.view-grid .row-item { position: relative; }
+.list.view-grid .sec-header { grid-column: 1 / -1; }
+
+/* Details: name plus a right-hand column of size and date. */
+.list.view-details .row-item { min-height: 46px; padding: 7px 8px; }
+.list.view-details .row-sub { font-size: .7rem; }
+.list.view-details .row-meta {
+  flex: none; text-align: right;
+  font-size: .68rem; color: var(--muted);
+  line-height: 1.35;
+  min-width: 74px;
+}
+/* The meta column only exists in this mode. */
+.row-meta { display: none; }
+.list.view-details .row-meta { display: block; }
+
+/* Section headers inside the file list ("Cloud drives" / "This device"). */
+.list-section {
+  font-size: .72rem;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  color: var(--muted);
+  padding: 16px 8px 6px;
+  font-weight: 700;
+}
+.list-section:first-child { padding-top: 4px; }
+
+/* ---------- search, filters, selection ---------- */
+
+.searchbar { display: flex; gap: 6px; align-items: center; padding: 0 10px 10px; }
+.searchbar .input { margin: 0; flex: 1; }
+
+.chip {
+  flex: none;
+  padding: 8px 11px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  color: var(--muted);
+  font-size: .74rem; font-family: inherit;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.chip.on { background: var(--accent-dim); border-color: var(--accent); color: var(--accent); }
+
+.filterbar {
+  display: flex; gap: 6px;
+  padding: 0 10px 10px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.filterbar::-webkit-scrollbar { display: none; }
+
+.checkbox {
+  flex: none;
+  width: 22px; height: 22px;
+  border: 2px solid var(--border);
+  border-radius: 6px;
+  display: grid; place-items: center;
+  font-size: 13px; color: transparent;
+}
+.row-item.selected { background: var(--accent-dim); }
+.row-item.selected .checkbox { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+.selbar {
+  position: fixed;
+  left: 0; right: 0;
+  bottom: calc(var(--tabbar-h) + var(--safe-b));
+  z-index: 45;
+  background: var(--surface-2);
+  border-top: 1px solid var(--border);
+  box-shadow: 0 -6px 20px #0007;
+}
+.selbar-count { font-size: .76rem; color: var(--muted); padding: 7px 14px 0; }
+.selbar-actions { display: flex; }
+.selbtn {
+  flex: 1;
+  display: flex; flex-direction: column; align-items: center; gap: 3px;
+  padding: 8px 4px 11px;
+  background: none; border: 0;
+  color: var(--text);
+  font-size: 17px; font-family: inherit;
+  cursor: pointer;
+}
+.selbtn span { font-size: .64rem; color: var(--muted); }
+.selbtn.danger { color: var(--bad); }
+.selbtn:active { background: var(--surface); }
+
+/* ---------- cards & controls ---------- */
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px;
+  margin-bottom: 12px;
+}
+.card h2 { font-size: 1rem; margin: 0 0 6px; }
+.card h3 { font-size: .92rem; margin: 0 0 6px; }
+.card hr { border: 0; border-top: 1px solid var(--border); margin: 14px 0; }
+
+.muted { color: var(--muted); }
+.small { font-size: .78rem; }
+p.muted { margin: 0 0 10px; font-size: .82rem; }
+code { background: var(--surface-2); padding: 1px 5px; border-radius: 5px; font-size: .8em; word-break: break-all; }
+
+.input {
+  width: 100%;
+  padding: 11px 12px;
+  margin-bottom: 8px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  color: var(--text);
+  font-size: 16px; /* 16px stops iOS/Android zooming the page on focus */
+  font-family: inherit;
+}
+.input:focus { outline: none; border-color: var(--accent); }
+select.input { appearance: none; background-image: none; }
+
+.btn {
+  padding: 11px 14px;
+  background: var(--surface-2);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  font-size: .88rem; font-weight: 600; font-family: inherit;
+  cursor: pointer;
+  min-height: 44px;
+}
+.btn:active { transform: translateY(1px); }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+.btn.danger { color: var(--bad); }
+.btn.block { display: block; width: 100%; margin-top: 8px; text-align: center; }
+.btn[disabled] { opacity: .5; pointer-events: none; }
+.file-label { display: flex; align-items: center; justify-content: center; }
+
+.toggle-row {
+  display: flex; align-items: flex-start; gap: 14px;
+  cursor: pointer;
+}
+.toggle-row > span { flex: 1; font-size: .9rem; }
+.toggle-row input[type="checkbox"] {
+  flex: none;
+  width: 44px; height: 26px;
+  margin: 2px 0 0;
+  accent-color: var(--accent);
+}
+
+.row { display: flex; gap: 8px; margin-top: 8px; }
+.row .btn { flex: 1; }
+
+/* ---------- drives ---------- */
+
+/* Compact rows, not posters. A drive is a list entry you scan, so it gets one
+   line of identity, one line of numbers, and a thin bar — not a card that
+   fills the screen. */
+.drive {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 9px 11px;
+  margin-bottom: 6px;
+}
+.drive-head { display: flex; align-items: center; gap: 9px; }
+.drive-head .row-icon { font-size: 17px; width: 20px; }
+.drive-name { flex: 1; font-weight: 600; font-size: .87rem;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* "1.2 GB / 15 GB" sits on the same row as the name, right-aligned. */
+.quota-line { display: flex; align-items: baseline; gap: 8px; margin-top: 5px; }
+.quota-big { flex: none; font-size: .78rem; font-weight: 650; color: var(--muted); letter-spacing: -.01em; }
+.quota-pct { margin-left: auto; font-size: .72rem; color: var(--muted); }
+
+.meter { height: 4px; background: var(--surface-2); border-radius: 3px; margin-top: 5px; overflow: hidden; }
+.meter > span { display: block; height: 100%; background: var(--accent); border-radius: 4px; }
+.meter.full > span { background: var(--bad); }
+.drive-stats { display: flex; justify-content: space-between; font-size: .71rem; color: var(--muted); margin-top: 4px; }
+
+/* ---------- setup guide ---------- */
+
+.guide-body { flex: 1; overflow-y: auto; padding: 12px 14px 20px; }
+.guide-intro { color: var(--muted); font-size: .84rem; margin: 0 0 14px; }
+.guide-step {
+  display: flex; gap: 11px;
+  padding: 11px 0;
+  border-bottom: 1px solid var(--border);
+}
+.guide-num {
+  flex: none;
+  width: 22px; height: 22px;
+  border-radius: 50%;
+  background: var(--accent-dim); color: var(--accent);
+  display: grid; place-items: center;
+  font-size: .72rem; font-weight: 700;
+}
+.guide-text { flex: 1; font-size: .86rem; line-height: 1.5; }
+.guide-warn {
+  display: block; margin-top: 6px;
+  padding: 7px 9px;
+  border-left: 2px solid var(--warn);
+  background: #d2992216;
+  border-radius: 0 6px 6px 0;
+  font-size: .78rem; color: var(--text);
+}
+.guide-copy {
+  display: flex; align-items: center; gap: 8px;
+  margin-top: 8px; padding: 8px 10px;
+  background: var(--bg); border: 1px solid var(--border); border-radius: 8px;
+  font: .74rem ui-monospace, Menlo, Consolas, monospace;
+  word-break: break-all; cursor: pointer;
+}
+.guide-copy span { flex: 1; }
+.guide-link {
+  display: inline-block; margin-top: 7px;
+  color: var(--accent); font-size: .8rem; text-decoration: none; font-weight: 600;
+}
+.guide-pick {
+  display: flex; align-items: center; gap: 11px;
+  padding: 12px 4px;
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+}
+.guide-pick-body { flex: 1; min-width: 0; }
+.guide-pick-name { font-size: .9rem; font-weight: 600; }
+.guide-pick-sub { font-size: .75rem; color: var(--muted); margin-top: 2px; }
+.effort {
+  flex: none; font-size: .64rem; text-transform: uppercase; letter-spacing: .04em;
+  padding: 3px 7px; border-radius: 20px;
+}
+.effort.none { background: #3fb95022; color: var(--good); }
+.effort.easy { background: var(--accent-dim); color: var(--accent); }
+.effort.console { background: #d2992222; color: var(--warn); }
+.badge {
+  flex: none;
+  font-size: .62rem; text-transform: uppercase; letter-spacing: .04em;
+  padding: 2px 6px; border-radius: 20px;
+  background: var(--accent-dim); color: var(--accent);
+}
+.badge.off { background: #6e768133; color: var(--muted); }
+
+/* Each provider gets its own colour, so a list of drives is scannable at a
+   glance rather than a column of identical grey pills. */
+.badge.kind-gdrive   { background: #34a85322; color: #4ade80; }
+.badge.kind-onedrive { background: #0078d422; color: #60a5fa; }
+.badge.kind-dropbox  { background: #0061ff22; color: #7aa2ff; }
+.badge.kind-pcloud   { background: #00a4e422; color: #38bdf8; }
+.badge.kind-terabox  { background: #1f6feb22; color: #58a6ff; }
+.badge.kind-webdav   { background: #a855f722; color: #c084fc; }
+.badge.kind-s3       { background: #ff990022; color: #fbbf24; }
+.badge.kind-local    { background: #6b728022; color: #9ca3af; }
+.badge.kind-pool     { background: #2f81f722; color: #60a5fa; }
+
+/* The account itself — an email, or the folder for device storage. */
+.drive-id {
+  font-size: .72rem; color: var(--muted);
+  margin-top: 3px;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+
+/* ---------- pairing ---------- */
+
+.pair-code {
+  font: 700 1.7rem/1.2 ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  letter-spacing: .18em;
+  text-align: center;
+  padding: 16px 8px 10px;
+  color: var(--accent);
+  word-break: break-all;
+}
+.pair-url {
+  text-align: center;
+  font: .78rem ui-monospace, Menlo, Consolas, monospace;
+  color: var(--muted);
+  word-break: break-all;
+  padding-bottom: 8px;
+}
+
+/* ---------- transfers ---------- */
+
+.jobs { display: flex; flex-direction: column; gap: 10px; }
+.job { font-size: .8rem; }
+.job-head { display: flex; justify-content: space-between; gap: 8px; }
+.job-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.job-pct { color: var(--muted); flex: none; }
+.job .meter { margin-top: 5px; }
+.job.error .job-pct { color: var(--bad); }
+.job.done > .meter > span { background: var(--good); }
+
+.progress-tray {
+  position: fixed;
+  left: 10px; right: 10px;
+  bottom: calc(var(--tabbar-h) + var(--safe-b) + 10px);
+  z-index: 30;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 10px 12px;
+  box-shadow: 0 8px 24px #0008;
+}
+
+/* ---------- fab + tabbar ---------- */
+
+.fab-wrap {
+  position: fixed;
+  right: 16px;
+  bottom: calc(var(--tabbar-h) + var(--safe-b) + 16px);
+  z-index: 25;
+}
+.fab {
+  display: grid; place-items: center;
+  width: 54px; height: 54px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--accent); color: #fff;
+  font-size: 28px; font-weight: 300; font-family: inherit;
+  box-shadow: 0 6px 18px #0009;
+  cursor: pointer;
+}
+.fab:active { transform: scale(.94); }
+
+.tabbar {
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  z-index: 40;
+  display: flex;
+  height: calc(var(--tabbar-h) + var(--safe-b));
+  padding-bottom: var(--safe-b);
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+}
+.tab {
+  flex: 1;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 2px;
+  background: none; border: 0;
+  color: var(--muted);
+  font-size: .64rem; font-family: inherit;
+  cursor: pointer;
+}
+.tab span { font-size: 19px; line-height: 1; }
+.tab.active { color: var(--accent); }
+
+/* ---------- sheet ---------- */
+
+/* Above the picker and the guide (65) and the viewer (70).
+   The sheet is how every prompt is asked — including "New folder" from inside
+   the destination picker — so if it sits below those overlays the prompt is
+   invisible and the app looks frozen. */
+.sheet {
+  position: fixed; inset: 0; z-index: 90;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  /* Anchored near the top rather than the bottom. A bottom sheet covered the
+     tab bar, the FAB and the selection bar — exactly the controls you need to
+     see while deciding what the prompt is asking about. */
+  padding: calc(20px + var(--safe-t)) 12px calc(12px + var(--safe-b));
+}
+.sheet[hidden] { display: none !important; }
+.sheet-backdrop { position: absolute; inset: 0; background: #000a; }
+.sheet-panel {
+  position: relative;
+  width: 100%;
+  max-width: 460px;
+  background: var(--surface);
+  border-radius: 16px;
+  border: 1px solid var(--border);
+  box-shadow: 0 18px 44px #0009;
+  padding: 6px 14px 14px;
+  max-height: calc(100dvh - 40px - var(--safe-t) - var(--safe-b));
+  overflow-y: auto;
+  animation: rise .18s ease-out;
+}
+@keyframes rise { from { transform: translateY(-10px); opacity: 0; } }
+.sheet-panel h3 { margin: 10px 2px 12px; font-size: 1rem; }
+.sheet-item {
+  display: flex; align-items: center; gap: 12px;
+  width: 100%;
+  padding: 13px 6px;
+  background: none; border: 0;
+  color: var(--text);
+  font-size: .92rem; font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+  border-radius: 9px;
+}
+.sheet-item:active { background: var(--surface-2); }
+.sheet-item.danger { color: var(--bad); }
+/* The drag handle only made sense while this was a bottom sheet; it now reads
+   as a stray line, but the element stays so sheet() needs no change. */
+.sheet-grab { display: none; }
+
+/* ---------- viewer ---------- */
+
+.viewer {
+  position: fixed; inset: 0; z-index: 70;
+  background: #000;
+  display: flex; flex-direction: column;
+}
+.viewer-bar {
+  display: flex; align-items: center; gap: 6px;
+  padding: env(safe-area-inset-top, 0px) 6px 0;
+  background: #000c;
+  flex: none;
+}
+.viewer-name {
+  flex: 1; min-width: 0;
+  font-size: .85rem; color: var(--text);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  padding: 12px 4px;
+}
+.viewer-body {
+  flex: 1; min-height: 0;
+  display: grid; place-items: center;
+  overflow: auto;
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+.viewer-body img, .viewer-body video {
+  max-width: 100%; max-height: 100%;
+  display: block;
+}
+.viewer-body audio { width: min(92%, 520px); }
+.viewer-body pre {
+  width: 100%; height: 100%; margin: 0;
+  padding: 14px;
+  overflow: auto;
+  color: var(--text);
+  background: var(--bg);
+  font: 12px/1.5 ui-monospace, Menlo, Consolas, monospace;
+  white-space: pre-wrap; word-break: break-word;
+}
+.viewer-msg { color: var(--muted); text-align: center; padding: 32px 24px; font-size: .9rem; }
+.viewer-msg .btn { margin-top: 14px; }
+
+/* ---------- destination picker ---------- */
+
+.picker {
+  position: fixed; inset: 0; z-index: 65;
+  background: var(--bg);
+  display: flex; flex-direction: column;
+  padding-top: env(safe-area-inset-top, 0px);
+}
+.picker-bar { display: flex; align-items: center; gap: 4px; padding: 6px 8px; border-bottom: 1px solid var(--border); }
+.picker-title { flex: 1; font-size: .95rem; font-weight: 650; text-align: center; }
+.picker-list { flex: 1; overflow-y: auto; padding: 0 12px; }
+.picker-actions {
+  display: flex; gap: 8px;
+  padding: 10px 12px calc(10px + env(safe-area-inset-bottom, 0px));
+  border-top: 1px solid var(--border);
+  background: var(--surface);
+}
+.picker-actions .btn { flex: 1; }
+
+/* ---------- toasts ---------- */
+
+.toasts {
+  position: fixed;
+  left: 12px; right: 12px;
+  bottom: calc(var(--tabbar-h) + var(--safe-b) + 12px);
+  /* Above everything, including the sheet: a message about what just happened
+     is useless if the thing it describes covers it. */
+  z-index: 100;
+  display: flex; flex-direction: column; gap: 8px;
+  pointer-events: none;
+}
+.toast {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
+  border-radius: 9px;
+  padding: 11px 13px;
+  font-size: .84rem;
+  box-shadow: 0 6px 20px #0009;
+  animation: rise .18s ease-out;
+  word-break: break-word;
+}
+.toast.error { border-left-color: var(--bad); }
+.toast.ok { border-left-color: var(--good); }
+
+/* Wider screens: the same layout, just centred and roomier. */
+@media (min-width: 720px) {
+  #main, .topbar-main, .crumbs { max-width: 780px; margin-inline: auto; }
+  .tabbar { justify-content: center; gap: 40px; }
+  .tab { flex: 0 0 90px; }
+}

@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- versionCode and versionName are injected by build-apk.sh through aapt2's
+     version flags. aapt2 only fills those in when the manifest leaves them
+     out, so declaring them here would silently pin every build to one version
+     and break upgrades. -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    package="com.omnidrive.app">
+
+    <uses-sdk android:minSdkVersion="29" android:targetSdkVersion="36" />
+
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+
+    <!-- The server keeps running while you are in another app, so transfers
+         finish instead of being killed the moment you switch away. -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
+    <!-- Android 13+ needs this at runtime for the ongoing notification. -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!-- Keeps the CPU awake during a long upload with the screen off. -->
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+
+    <!-- Browsing the whole device is what makes this a file manager rather
+         than a cloud-only app. Since Android 11 that requires this special
+         permission, granted from a system settings screen rather than a
+         dialog; without it an app sees only its own folder. -->
+    <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE"
+        tools:ignore="ScopedStorage" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"
+        android:maxSdkVersion="32" />
+
+    <application
+        android:label="@string/app_name"
+        android:icon="@mipmap/ic_launcher"
+        android:roundIcon="@mipmap/ic_launcher"
+        android:theme="@style/AppTheme"
+        android:allowBackup="false"
+        android:supportsRtl="true"
+        android:networkSecurityConfig="@xml/network_security_config"
+        android:hardwareAccelerated="true"
+        android:extractNativeLibs="true"
+        android:enableOnBackInvokedCallback="true">
+
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:launchMode="singleTask"
+            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|uiMode|density|smallestScreenSize"
+            android:windowSoftInputMode="adjustResize">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <service
+            android:name=".ServerService"
+            android:exported="false"
+            android:foregroundServiceType="dataSync" />
+
+        <!-- Serves files as content:// URIs so "Open with" offers real apps.
+             Not exported: access is granted per-file by the read permission
+             attached to the intent, exactly as FileProvider works. -->
+        <provider
+            android:name=".StreamProvider"
+            android:authorities="com.omnidrive.app.stream"
+            android:exported="false"
+            android:grantUriPermissions="true" />
+    </application>
+</manifest>

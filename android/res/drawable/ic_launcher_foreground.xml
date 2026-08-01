@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- A cloud with a downward arrow. Vector so the icon costs ~1 KB instead of
+     a folder of PNG densities. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- Cloud body: the adaptive-icon safe zone is the middle 72x72dp. -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M72.5,49.2c-1.6,-9.6 -10,-16.9 -20.1,-16.9c-8,0 -14.9,4.6 -18.3,11.3c-8.1,0.9 -14.4,7.7 -14.4,16c0,8.9 7.2,16.1 16.1,16.1h35.9c7.4,0 13.4,-6 13.4,-13.4C85.1,55.6 79.6,49.8 72.5,49.2z" />
+
+    <!-- Arrow, in the background colour so it reads as a cut-out. -->
+    <path
+        android:fillColor="#1F6FEB"
+        android:pathData="M54,45.5l4.4,0l0,10.2l6.1,0l-8.3,10.3l-8.3,-10.3l6.1,0z" />
+</vector>

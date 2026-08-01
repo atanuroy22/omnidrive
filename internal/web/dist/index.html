@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0d1117">
+<title>OmniDrive</title>
+<link rel="stylesheet" href="/app.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>☁️</text></svg>">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-main">
+    <button id="btn-up" class="icon-btn" title="Up one level" aria-label="Up one level" hidden>←</button>
+    <h1 id="view-title">Files</h1>
+    <div class="topbar-actions">
+      <button id="btn-search" class="icon-btn" title="Search" aria-label="Search">⌕</button>
+      <button id="btn-more" class="icon-btn" title="More" aria-label="More">⋮</button>
+    </div>
+  </div>
+
+  <div id="searchbar" class="searchbar" hidden>
+    <input id="search-input" class="input" type="search" placeholder="Search this drive…" autocomplete="off">
+    <button id="search-scope" class="chip" title="Toggle search scope">This drive</button>
+    <button id="search-close" class="icon-btn">✕</button>
+  </div>
+
+  <nav id="crumbs" class="crumbs" hidden></nav>
+
+</header>
+
+<main id="main">
+  <section id="view-files" class="view">
+    <div id="files-list" class="list"></div>
+    <div id="files-empty" class="empty" hidden></div>
+  </section>
+
+
+  <section id="view-drives" class="view" hidden>
+    <div id="drives-list" class="list"></div>
+    <button id="btn-add-drive" class="btn primary block">Connect a drive</button>
+    <button id="btn-add-storage" class="btn block">Add phone or SD card storage</button>
+    <button id="btn-guide" class="btn block">How to connect a drive</button>
+    <button id="btn-shared-links" class="btn block">Shared links</button>
+    <div class="card">
+      <label class="toggle-row">
+        <span>
+          <b>Combine cloud drives</b>
+          <span class="muted small" style="display:block;margin-top:2px">Show them as one drive</span>
+        </span>
+        <input id="toggle-pool" type="checkbox" checked>
+      </label>
+    </div>
+    <div class="card">
+      <h3>Where new uploads go</h3>
+      <p class="muted">Applies when you upload without picking a drive first.</p>
+      <select id="strategy" class="input"></select>
+    </div>
+    <div class="card">
+      <h3>Transfers</h3>
+      <div id="jobs-list" class="jobs"></div>
+    </div>
+    <div class="card">
+      <h3>About</h3>
+      <div id="about" class="muted small"></div>
+    </div>
+
+  </section>
+
+  <section id="view-sync" class="view" hidden>
+    <div class="card">
+      <h2>Move this setup to another device</h2>
+      <p class="muted">Copies every drive and its sign-in, so the new device signs in to nothing.</p>
+    </div>
+
+    <div class="card">
+      <h3>1 · Pair over Wi-Fi</h3>
+      <p class="muted">Both devices on the same network. Fastest option.</p>
+      <button id="btn-pair-start" class="btn block">Create pairing link</button>
+      <div id="pair-offer" hidden>
+        <div class="pair-url" id="pair-link"></div>
+        <button id="btn-pair-copy" class="btn block">Copy link</button>
+        <p class="muted small">Single use · expires in 10 minutes</p>
+      </div>
+      <hr>
+      <p class="muted small">Got a link from another device? Paste it here.</p>
+      <input id="pair-join-url" class="input" placeholder="http://192.168.x.x:PORT/pair/…?c=…" autocomplete="off">
+      <button id="btn-pair-join" class="btn block">Receive setup</button>
+    </div>
+
+    <div class="card">
+      <h3>2 · Keep a copy in a drive you already use</h3>
+      <p class="muted">Saved into the drive you pick. Restore it on a new phone after connecting that one account.</p>
+      <select id="cloud-account" class="input"></select>
+      <div class="row">
+        <button id="btn-cloud-push" class="btn">Upload setup</button>
+        <button id="btn-cloud-pull" class="btn">Restore setup</button>
+      </div>
+      <div id="cloud-status" class="muted small"></div>
+    </div>
+
+    <div class="card">
+      <h3>3 · Export to a file</h3>
+      <p class="muted">Keep it anywhere — USB, a backup app, a message to yourself.</p>
+      <button id="btn-export" class="btn block">Download bundle</button>
+      <p class="muted small">The file holds your sign-ins. Treat it like a password.</p>
+      <hr>
+      <label class="btn block file-label">
+        Import bundle<input id="import-file" type="file" accept=".omnibundle,application/octet-stream" hidden>
+      </label>
+    </div>
+  </section>
+
+</main>
+
+<div id="selbar" class="selbar" hidden>
+  <div class="selbar-count"><span id="sel-count">0</span> selected</div>
+  <div class="selbar-actions">
+    <button class="selbtn" data-act="copy">📤<span>Copy to</span></button>
+    <button class="selbtn" data-act="move">➡<span>Move to</span></button>
+    <button class="selbtn" data-act="share">📨<span>Share</span></button>
+    <button class="selbtn" data-act="download">⬇<span>Download</span></button>
+    <button class="selbtn danger" data-act="delete">🗑<span>Delete</span></button>
+  </div>
+</div>
+
+<div id="fab-wrap" class="fab-wrap">
+  <button id="fab" class="fab" title="Add">+</button>
+  <input id="upload-input" type="file" multiple hidden>
+</div>
+
+<nav class="tabbar">
+  <button class="tab active" data-view="files"><span>📁</span>Files</button>
+  <button class="tab" data-view="drives"><span>☁️</span>Drive Settings</button>
+  <button class="tab" data-view="sync"><span>⇄</span>Share</button>
+</nav>
+
+<div id="guide" class="picker" hidden>
+  <div class="picker-bar">
+    <button id="guide-back" class="icon-btn">←</button>
+    <div id="guide-title" class="picker-title">Connect a drive</div>
+    <button id="guide-close" class="icon-btn">✕</button>
+  </div>
+  <div id="guide-body" class="guide-body"></div>
+  <div class="picker-actions" id="guide-actions" hidden>
+    <button id="guide-connect" class="btn primary">Connect now</button>
+  </div>
+</div>
+
+<div id="viewer" class="viewer" hidden>
+  <div class="viewer-bar">
+    <button id="viewer-close" class="icon-btn">✕</button>
+    <div id="viewer-name" class="viewer-name"></div>
+    <button id="viewer-ext" class="icon-btn" title="Open in another app">⧉</button>
+    <button id="viewer-dl" class="icon-btn" title="Download">⬇</button>
+  </div>
+  <div id="viewer-body" class="viewer-body"></div>
+</div>
+
+<div id="picker" class="picker" hidden>
+  <div class="picker-bar">
+    <button id="picker-up" class="icon-btn">←</button>
+    <div id="picker-title" class="picker-title">Choose destination</div>
+    <button id="picker-cancel" class="icon-btn">✕</button>
+  </div>
+  <nav id="picker-crumbs" class="crumbs"></nav>
+  <div id="picker-list" class="list picker-list"></div>
+  <div class="picker-actions">
+    <button id="picker-newfolder" class="btn">New folder</button>
+    <button id="picker-confirm" class="btn primary">Paste here</button>
+  </div>
+</div>
+
+<div id="sheet" class="sheet" hidden>
+  <div class="sheet-backdrop" data-close></div>
+  <div class="sheet-panel" id="sheet-panel"></div>
+</div>
+
+<div id="toasts" class="toasts"></div>
+<div id="progress-tray" class="progress-tray" hidden></div>
+
+<script src="/app.js"></script>
+</body>
+</html>

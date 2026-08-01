@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Matches the web UI palette so there is no colour flash on launch. -->
+    <color name="bg">#0D1117</color>
+    <color name="surface">#161B22</color>
+    <color name="accent">#2F81F7</color>
+    <color name="text">#E6EDF3</color>
+    <color name="muted">#9198A1</color>
+    <color name="icon_bg">#1F6FEB</color>
+</resources>

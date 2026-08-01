@@ -1,0 +1,40 @@
+# Compiled binaries
+/build/
+omnidrive
+omnidrive.exe
+
+# Local state — contains encrypted account credentials
+.omnidrive/
+*.omnibundle
+-port/
+
+# APK build
+android/.build/
+# Signing key: a private key, so it must not be committed — but back it up.
+# Android refuses to upgrade an app signed with a different key.
+android/*.keystore
+
+# Compiled-in OAuth client credentials
+oauth.env
+
+# Editor / OS noise
+.DS_Store
+Thumbs.db
+*.swp
+.idea/
+.vscode/
+
+# Go
+*.test
+*.out
+vendor/
+
+# Sensitive OAuth client secrets (auto-generated from console.cloud.google.com etc.)
+client_secret_*.json
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+base_src

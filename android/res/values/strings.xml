@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">OmniDrive</string>
+    <string name="notif_channel">OmniDrive server</string>
+    <string name="notif_title">OmniDrive is running</string>
+    <string name="notif_text">Your drives are available</string>
+    <string name="action_stop">Stop</string>
+    <string name="starting">Starting OmniDrive…</string>
+    <string name="show_log">Log</string>
+    <string name="cancel">Cancel</string>
+    <string name="signing_in">Checking the session…</string>
+    <string name="sign_in_waiting">Waiting for you to sign in — this closes by itself when you do.</string>
+    <string name="sign_in_retry">Not signed in yet: %1$s</string>
+    <string name="sign_in_to">Sign in to %1$s</string>
+    <string name="sign_in_cancelled">Sign-in was cancelled</string>
+</resources>
