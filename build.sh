@@ -10,7 +10,10 @@
 
 set -euo pipefail
 
-VERSION="${VERSION:-1.0.0}"
+here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=version.sh
+. "$here/version.sh"
+
 OUT="${OUT:-build}"
 
 here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"

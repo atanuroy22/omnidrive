@@ -15,8 +15,8 @@ set -euo pipefail
 here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 root="$(cd "$here/.." && pwd)"
 
-VERSION="${VERSION:-1.0.0}"
-VERSION_CODE="${VERSION_CODE:-1}"
+# shellcheck source=../version.sh
+. "$root/version.sh"
 
 # shellcheck source=../scripts/oauth-ldflags.sh
 . "$root/scripts/oauth-ldflags.sh"
