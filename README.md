@@ -22,16 +22,12 @@ Works on **Android** (as a native APK), **Windows**, **Linux**, and **macOS** â€
 
 ## Screenshots
 
-### Android
-
-![All connected drives](docs/screenshots/all_drives.jpeg)
-*Connect multiple accounts and see them all in one place.*
-
-![Combined file view](docs/screenshots/combined.jpeg)
-*Browse files from every provider in a unified folder tree.*
-
-![Settings](docs/screenshots/setting.jpeg)
-*Manage drives, configure upload strategies, and export your setup.*
+<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px">
+<img src="docs/screenshots/all_drives.jpeg" width="100%" alt="All connected drives" />
+<img src="docs/screenshots/combined.jpeg" width="100%" alt="Combined file view" />
+<img src="docs/screenshots/setting.jpeg" width="100%" alt="Settings screen" />
+</div>
+<div style="text-align:center;color:#888;font-size:0.85em;margin-top:4px">Android UI â€” same experience on Windows, Linux &amp; macOS</div>
 
 ---
 
