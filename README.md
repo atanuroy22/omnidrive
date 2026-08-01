@@ -77,7 +77,7 @@ omnidrive-windows-amd64.exe
 ```
 
 **Android:**
-- Download the APK, then: install it.
+- [Download](https://github.com/atanuroy22/omnidrive/releases/latest) the APK, then: install it.
 
 ### Build from Source
 
