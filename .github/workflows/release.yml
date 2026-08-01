@@ -41,7 +41,7 @@ jobs:
           name: omnidrive-windows-amd64
           path: omnidrive-windows-amd64.exe
 
-  apk:
+  android:
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
