@@ -14,57 +14,8 @@ permissions:
   contents: write
 
 jobs:
-  build:
+  windows:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        include:
-          - goos: linux
-            goarch: amd64
-            name: linux-amd64
-            ext: ''
-          - goos: linux
-            goarch: arm64
-            name: linux-arm64
-            ext: ''
-          - goos: linux
-            goarch: '386'
-            name: linux-386
-            ext: ''
-          - goos: linux
-            goarch: arm
-            goarm: '7'
-            name: linux-arm
-            ext: ''
-          - goos: windows
-            goarch: amd64
-            name: windows-amd64
-            ext: .exe
-          - goos: windows
-            goarch: '386'
-            name: windows-386
-            ext: .exe
-          - goos: darwin
-            goarch: amd64
-            name: darwin-amd64
-            ext: ''
-          - goos: darwin
-            goarch: arm64
-            name: darwin-arm64
-            ext: ''
-          - goos: linux
-            goarch: arm64
-            name: android-arm64
-            ext: ''
-          - goos: linux
-            goarch: arm
-            goarm: '7'
-            name: android-arm
-            ext: ''
-          - goos: linux
-            goarch: amd64
-            name: android-x86_64
-            ext: ''
     steps:
       - uses: actions/checkout@v4
 
@@ -79,17 +30,16 @@ jobs:
           source version.sh
           echo "version=$VERSION" >> $GITHUB_OUTPUT
 
-      - name: Build ${{ matrix.name }}
+      - name: Build Windows
         run: |
-          OUT_NAME="omnidrive-${{ matrix.name }}${{ matrix.ext }}"
-          CGO_ENABLED=0 GOOS=${{ matrix.goos }} GOARCH=${{ matrix.goarch }} GOARM="${{ matrix.goarm }}" \
-            go build -trimpath -ldflags "-s -w -X main.version=${{ steps.version.outputs.version }}" -o "$OUT_NAME" ./cmd/omnidrive
+          CGO_ENABLED=0 GOOS=windows GOARCH=amd64 \
+            go build -trimpath -ldflags "-s -w -X main.version=${{ steps.version.outputs.version }}" -o "omnidrive-windows-amd64.exe" ./cmd/omnidrive
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: omnidrive-${{ matrix.name }}
-          path: omnidrive-${{ matrix.name }}${{ matrix.ext }}
+          name: omnidrive-windows-amd64
+          path: omnidrive-windows-amd64.exe
 
   apk:
     runs-on: ubuntu-latest
@@ -130,8 +80,8 @@ jobs:
           path: build/*.apk
 
   release:
-    needs: [build, apk]
-    if: always() && needs.build.result == 'success'
+    needs: [windows, android]
+    if: always() && needs.windows.result == 'success'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
