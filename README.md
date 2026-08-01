@@ -22,12 +22,14 @@ Works on **Android** (as a native APK), **Windows**, **Linux**, and **macOS** �
 
 ## Screenshots
 
-<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px">
-<img src="docs/screenshots/all_drives.jpeg" width="100%" alt="All connected drives" />
-<img src="docs/screenshots/combined.jpeg" width="100%" alt="Combined file view" />
-<img src="docs/screenshots/setting.jpeg" width="100%" alt="Settings screen" />
-</div>
-<div style="text-align:center;color:#888;font-size:0.85em;margin-top:4px">Android UI — same experience on Windows, Linux &amp; macOS</div>
+<table>
+<tr>
+<td align="center"><img src="docs/screenshots/all_drives.jpeg" width="200" alt="All drives" /><br/><sub>All connected drives</sub></td>
+<td align="center"><img src="docs/screenshots/combined.jpeg" width="200" alt="Combined view" /><br/><sub>Unified file view</sub></td>
+<td align="center"><img src="docs/screenshots/setting.jpeg" width="200" alt="Settings" /><br/><sub>Settings screen</sub></td>
+</tr>
+</table>
+<p align="center"><sub>Android UI — same experience on Windows, Linux &amp; macOS</sub></p>
 
 ---
 
