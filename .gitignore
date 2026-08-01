@@ -8,6 +8,9 @@ omnidrive.exe
 *.omnibundle
 -port/
 
+# Old screenshot folder (moved to docs/screenshots/)
+pic/
+
 # APK build
 android/.build/
 # Signing key: a private key, so it must not be committed — but back it up.

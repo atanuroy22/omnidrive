@@ -22,6 +22,21 @@ $ omnidrive
 
 ---
 
+## Screenshots
+
+### Android — all connected drives
+![All drives](docs/screenshots/all_drives.jpeg)
+
+### Android — combined file view across providers
+![Combined view](docs/screenshots/combined.jpeg)
+
+### Android — settings screen
+![Settings](docs/screenshots/setting.jpeg)
+
+The same UI works on **Windows**, **Linux**, and **macOS** — it's a browser app served from a single binary. No separate desktop client needed.
+
+---
+
 ## Why this is a rewrite, not a port
 
 This project takes its concept and vocabulary from
