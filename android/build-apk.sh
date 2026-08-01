@@ -188,9 +188,13 @@ echo "==> Aligning"
 "$ZIPALIGN" -p -f 4 "$work/unsigned.apk" "$work/aligned.apk"
 
 KEYSTORE="$here/omnidrive-release.keystore"
-STOREPASS="${KEYSTORE_PASS:-omnidrive}"
+STOREPASS="${RELEASE_STORE_PASSWORD:-omnidrive}"
 
-if [ ! -f "$KEYSTORE" ]; then
+# If RELEASE_KEYSTORE_BASE64 is set (from GitHub Secrets), decode it
+if [ -n "${RELEASE_KEYSTORE_BASE64:-}" ]; then
+  echo "==> Loading keystore from secrets"
+  echo "$RELEASE_KEYSTORE_BASE64" | base64 -d > "$KEYSTORE"
+elif [ ! -f "$KEYSTORE" ]; then
   echo "==> Creating a signing key (first run only)"
   # A self-signed key: Android requires every APK to be signed, and a
   # sideloaded app has no store to verify against. Keep this file — Android
