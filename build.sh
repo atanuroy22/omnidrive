@@ -10,7 +10,7 @@
 
 set -euo pipefail
 
-VERSION="${VERSION:-$(git describe --tags --always --dirty 2>/dev/null || echo dev)}"
+VERSION="${VERSION:-1.0.0}"
 OUT="${OUT:-build}"
 
 here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"

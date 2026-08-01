@@ -41,7 +41,7 @@ jobs:
       - name: Build ${{ matrix.goos }}/${{ matrix.goarch }}
         run: |
           CGO_ENABLED=0 GOOS=${{ matrix.goos }} GOARCH=${{ matrix.goarch }} \
-            go build -trimpath -ldflags "-s -w" -o omnidrive${{ matrix.ext }} ./cmd/omnidrive
+            go build -trimpath -ldflags "-s -w -X main.version=1.0.0" -o omnidrive${{ matrix.ext }} ./cmd/omnidrive
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
@@ -72,7 +72,7 @@ jobs:
       - name: Build APK
         run: |
           chmod +x android/build-apk.sh
-          VERSION=${{ github.ref_name }} bash android/build-apk.sh
+          VERSION=1.0.0 VERSION_CODE=1 bash android/build-apk.sh
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
