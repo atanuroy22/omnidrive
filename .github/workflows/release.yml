@@ -50,14 +50,15 @@ jobs:
 
       - name: Build ${{ matrix.goos }}/${{ matrix.goarch }}
         run: |
+          OUT_NAME="omnidrive-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.ext }}"
           CGO_ENABLED=0 GOOS=${{ matrix.goos }} GOARCH=${{ matrix.goarch }} \
-            go build -trimpath -ldflags "-s -w -X main.version=${{ steps.version.outputs.version }}" -o omnidrive${{ matrix.ext }} ./cmd/omnidrive
+            go build -trimpath -ldflags "-s -w -X main.version=${{ steps.version.outputs.version }}" -o "$OUT_NAME" ./cmd/omnidrive
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: omnidrive-${{ matrix.goos }}-${{ matrix.goarch }}
-          path: omnidrive${{ matrix.ext }}
+          path: omnidrive-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.ext }}
 
   apk:
     runs-on: ubuntu-latest
@@ -94,7 +95,7 @@ jobs:
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: omnidrive-android.apk
+          name: omnidrive-apk
           path: build/*.apk
 
   release:
@@ -114,12 +115,13 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           path: artifacts
+          merge-multiple: true
 
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v${{ steps.version.outputs.version }}
-          files: artifacts/**/*
+          files: artifacts/*
           generate_release_notes: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
