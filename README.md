@@ -44,14 +44,15 @@ OmniDrive brings all your cloud storage into one unified interface. Connect Goog
 
 ## Download
 
-Pre-built binaries are auto-generated on every release:
+Pre-built binaries are auto-generated on every release for all architectures:
 
 | Platform | File |
 |---|---|
-| Android (APK) | omnidrive-android-arm64.apk |
-| Windows | omnidrive-windows-amd64.exe |
-| Linux | omnidrive-linux-amd64 |
-| macOS | omnidrive-darwin-arm64 |
+| Android (APK) | `omnidrive-0.15.3.apk` (Universal) |
+| Android (Termux) | `omnidrive-android-arm64`, `omnidrive-android-arm`, `omnidrive-android-x86_64` |
+| Windows | `omnidrive-windows-amd64.exe` (64-bit), `omnidrive-windows-386.exe` (32-bit x86) |
+| Linux | `omnidrive-linux-amd64`, `omnidrive-linux-386`, `omnidrive-linux-arm64`, `omnidrive-linux-arm` |
+| macOS | `omnidrive-darwin-arm64` (Apple Silicon), `omnidrive-darwin-amd64` (Intel) |
 
 👉 **[Download Latest Release](https://github.com/atanuroy22/omnidrive/releases/latest)**
 
